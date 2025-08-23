@@ -88,7 +88,9 @@ const state = {
   oddType:null, // 'heavy' | 'light'
   left:[], right:[],
   weighs:0,
-  finished:false
+  finished:false,
+  selected: null
+
 };
 
 const el={
@@ -121,11 +123,24 @@ function renderCoins(){
   el.coinsList.innerHTML='';
   ALL.forEach(n=>{
     const s=document.createElement('span');
-    s.textContent=n; s.className='chip';
-    s.onclick=()=>toggleCoin(n);
+    s.textContent=n;
+    s.className='chip';
+    if(state.selected===n) s.classList.add('selected');
+    s.onclick=()=>selectCoin(n);
     el.coinsList.appendChild(s);
   });
 }
+
+function selectCoin(n){
+  if(state.finished) return;
+  if(state.selected===n){
+    state.selected=null; // quitar selección
+  } else {
+    state.selected=n; // nueva selección
+  }
+  renderCoins();
+}
+
 
 function toggleCoin(n){
   if(state.finished) return;
@@ -139,16 +154,24 @@ function toggleCoin(n){
 }
 
 function renderPans(){
-  const fill=(container,arr)=>{
+  const fill=(container,arr,side)=>{
     container.innerHTML='';
     arr.forEach(n=>{
-      const s=document.createElement('span'); s.textContent=n; s.className='chip selected';
+      const s=document.createElement('span');
+      s.textContent=n;
+      s.className='chip selected';
+      s.onclick=()=>{ // quitar de la balanza
+        state[side]=state[side].filter(x=>x!==n);
+        renderPans();
+        renderCoins();
+      };
       container.appendChild(s);
     });
   };
-  fill(el.leftPan,state.left);
-  fill(el.rightPan,state.right);
+  fill(el.leftPan,state.left,"left");
+  fill(el.rightPan,state.right,"right");
 }
+
 
 function tilt(which){
   if(which==='eq') el.beam.style.transform='translateX(-50%) rotate(0deg)';
@@ -195,6 +218,29 @@ function guess(){
     log(`Fallaste. La canica correcta era ${state.odd} (${state.oddType}).`,'bad');
   }
 }
+
+el.leftPan.parentElement.onclick=()=>{
+  if(state.selected){
+    if(!state.left.includes(state.selected) && !state.right.includes(state.selected)){
+      state.left.push(state.selected);
+    }
+    state.selected=null;
+    renderPans();
+    renderCoins();
+  }
+};
+
+el.rightPan.parentElement.onclick=()=>{
+  if(state.selected){
+    if(!state.left.includes(state.selected) && !state.right.includes(state.selected)){
+      state.right.push(state.selected);
+    }
+    state.selected=null;
+    renderPans();
+    renderCoins();
+  }
+};
+
 
 el.weighBtn.onclick=weigh;
 el.guessBtn.onclick=guess;
