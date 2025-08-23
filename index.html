@@ -1,252 +1,481 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Balanza interactiva – 12 canicas</title>
-  <style>
-    :root{
-      --bg:#0f172a;
-      --panel:#111827;
-      --muted:#94a3b8;
-      --text:#e5e7eb;
-      --accent:#38bdf8;
-      --good:#22c55e;
-      --bad:#ef4444;
-      --warn:#f59e0b;
-    }
-    body{margin:0; font-family:system-ui; background:linear-gradient(180deg,#0b1224,#0f172a); color:var(--text); display:flex; justify-content:center; align-items:center; min-height:100vh;}
-    .app{width:min(1100px,100%); background:rgba(17,24,39,.8); border:1px solid rgba(148,163,184,.2); border-radius:18px; box-shadow:0 10px 40px rgba(0,0,0,.35); overflow:hidden;}
-    header{display:flex; justify-content:space-between; padding:16px 20px; border-bottom:1px solid rgba(148,163,184,.15)}
-    header h1{font-size:20px; margin:0}
-    .pill{background:var(--accent); color:var(--bg); padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700}
-    .grid{display:grid; grid-template-columns:1fr 300px;}
-    .controls{padding:16px; display:flex; gap:8px; flex-wrap:wrap}
-    .btn{border:1px solid rgba(148,163,184,.25); background:#0b1224; color:var(--text); border-radius:12px; padding:8px 14px; cursor:pointer; font-weight:600}
-    .btn.primary{background:var(--accent); color:#0b1224; border:none}
-    .btn:disabled{opacity:.5; pointer-events:none}
-    .stage{padding:24px; display:grid; place-items:center}
-    .scale{position:relative; width:100%; max-width:600px; height:260px}
-    .beam{position:absolute; left:50%; top:80px; width:360px; height:10px; background:linear-gradient(90deg,#1f2937,#334155); border-radius:8px; transform:translateX(-50%) rotate(0deg); transform-origin:50% 50%; transition:.6s}
-    .pillar{position:absolute; left:50%; top:40px; width:14px; height:100px; background:linear-gradient(#374151,#111827); transform:translateX(-50%); border-radius:8px}
-    .chain{position:absolute; top:90px; width:2px; height:100px; background:rgba(148,163,184,.25)}
-    .chain.left{left:calc(50% - 150px)}
-    .chain.right{left:calc(50% + 148px)}
-    .pan{position:absolute; top:180px; width:150px; height:10px; background:linear-gradient(#1f2937,#0b1224); border-radius:10px}
-    .pan.left{left:calc(50% - 225px)}
-    .pan.right{left:calc(50% + 75px)}
-    .coinsOnPan{position:absolute; top:-70px; left:50%; transform:translateX(-50%); display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:130px}
-    .chip{min-width:32px; height:32px; display:inline-flex; justify-content:center; align-items:center; border-radius:999px; background:#111827; border:1px solid rgba(148,163,184,.35); cursor:pointer; font-weight:700}
-    .chip.selected{border-color:var(--accent); box-shadow:0 0 0 2px rgba(56,189,248,.3)}
-    .tray{padding:12px; border-top:1px dashed rgba(148,163,184,.2); display:flex; flex-wrap:wrap; gap:6px}
-    .log{padding:12px; font-size:14px; max-height:200px; overflow:auto; border-top:1px solid rgba(148,163,184,.15)}
-    .side{border-left:1px solid rgba(148,163,184,.15); display:flex; flex-direction:column;}
-    .side h2{margin:0; padding:14px; font-size:16px; border-bottom:1px solid rgba(148,163,184,.15)}
-    .list{padding:12px; display:flex; flex-wrap:wrap; gap:6px}
-    .final{padding:14px; font-weight:700; border-top:1px solid rgba(148,163,184,.15)}
-    .history{padding:12px; font-size:13px; border-top:1px solid rgba(148,163,184,.15)}
-  </style>
-</head>
-<body>
-<div class="app">
-  <header>
-    <h1>Balanza interactiva – 12 canicas</h1>
-    <span class="pill" id="weighCount">0 / 3 pesadas</span>
-  </header>
-  <div class="grid">
-    <main>
-      <div class="controls">
-        <button class="btn primary" id="weighBtn">Calcular pesada</button>
-        <button class="btn" id="guessBtn">Adivinar canica</button>
-        <button class="btn" id="resetBtn">Reiniciar</button>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Balanza interactiva – 12 canicas</title>
+    <!-- Bootstrap CSS -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0f172a;
+        --panel: #111827;
+        --muted: #94a3b8;
+        --text: #e5e7eb;
+        --accent: #38bdf8;
+        --good: #22c55e;
+        --bad: #ef4444;
+        --warn: #f59e0b;
+      }
+      body {
+        margin: 0;
+        font-family: system-ui;
+        background: linear-gradient(180deg, #0b1224, #0f172a);
+        color: var(--text);
+        display: flex;
+        justify-content: center;
+        align-items: flex-start;
+        min-height: 100vh;
+        padding: 1rem;
+      }
+      .app {
+        width: 100%;
+        max-width: 1100px;
+        background: rgba(17, 24, 39, 0.8);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 18px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35);
+        overflow: hidden;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        padding: 16px 20px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      }
+      header h1 {
+        font-size: 20px;
+        margin: 0;
+      }
+      .pill {
+        background: var(--accent);
+        color: var(--bg);
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .controls {
+        padding: 16px;
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .btn {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: #0b1224;
+        color: var(--text);
+        border-radius: 12px;
+        padding: 8px 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: #0b1224;
+        border: none;
+      }
+      .btn:disabled {
+        opacity: 0.5;
+        pointer-events: none;
+      }
+      .stage {
+        padding: 24px;
+        display: grid;
+        place-items: center;
+      }
+      .scale {
+        position: relative;
+        width: 100%;
+        max-width: 600px;
+        height: 260px;
+      }
+      .beam {
+        position: absolute;
+        left: 50%;
+        top: 80px;
+        width: 360px;
+        height: 10px;
+        background: linear-gradient(90deg, #1f2937, #334155);
+        border-radius: 8px;
+        transform: translateX(-50%) rotate(0deg);
+        transform-origin: 50% 50%;
+        transition: 0.6s;
+      }
+      .pillar {
+        position: absolute;
+        left: 50%;
+        top: 40px;
+        width: 14px;
+        height: 100px;
+        background: linear-gradient(#374151, #111827);
+        transform: translateX(-50%);
+        border-radius: 8px;
+      }
+      .chain {
+        position: absolute;
+        top: 90px;
+        width: 2px;
+        height: 100px;
+        background: rgba(148, 163, 184, 0.25);
+      }
+      .chain.left {
+        left: calc(50% - 150px);
+      }
+      .chain.right {
+        left: calc(50% + 148px);
+      }
+      .pan {
+        position: absolute;
+        top: 180px;
+        width: 150px;
+        height: 10px;
+        background: linear-gradient(#1f2937, #0b1224);
+        border-radius: 10px;
+      }
+      .pan.left {
+        left: calc(50% - 225px);
+      }
+      .pan.right {
+        left: calc(50% + 75px);
+      }
+      .coinsOnPan {
+        position: absolute;
+        top: -70px;
+        left: 50%;
+        transform: translateX(-50%);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+        width: 130px;
+      }
+      .chip {
+        min-width: 32px;
+        height: 32px;
+        display: inline-flex;
+        justify-content: center;
+        align-items: center;
+        border-radius: 999px;
+        background: #111827;
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        cursor: pointer;
+        font-weight: 700;
+      }
+      .chip.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+      }
+      .tray {
+        padding: 12px;
+        border-top: 1px dashed rgba(148, 163, 184, 0.2);
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        overflow-x: auto;
+      }
+      .log {
+        padding: 12px;
+        font-size: 14px;
+        max-height: 200px;
+        overflow: auto;
+        border-top: 1px solid rgba(148, 163, 184, 0.15);
+      }
+      .side {
+        border-left: 1px solid rgba(148, 163, 184, 0.15);
+        display: flex;
+        flex-direction: column;
+      }
+      .side h2 {
+        margin: 0;
+        padding: 14px;
+        font-size: 16px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.15);
+      }
+      .list {
+        padding: 12px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .final {
+        padding: 14px;
+        font-weight: 700;
+        border-top: 1px solid rgba(148, 163, 184, 0.15);
+      }
+      .history {
+        padding: 12px;
+        font-size: 13px;
+        border-top: 1px solid rgba(148, 163, 184, 0.15);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app container-fluid">
+      <header>
+        <h1>Adrian Cisneros</h1>
+        <span class="pill" id="weighCount">0 / 3 pesadas</span>
+      </header>
+      <div class="row g-0">
+        <main class="col-12 col-lg-8 p-2">
+          <div class="controls d-flex flex-wrap gap-2 mb-2">
+            <button class="btn bg-success" id="weighBtn">
+              Calcular pesada
+            </button>
+            <button class="btn bg-black" id="guessBtn">Adivinar canica</button>
+            <button class="btn bg-dark" id="resetBtn">Reiniciar</button>
+          </div>
+          <section class="stage">
+            <div class="scale">
+              <div class="pillar"></div>
+              <div class="beam" id="beam"></div>
+              <div class="chain left"></div>
+              <div class="chain right"></div>
+              <div class="pan left">
+                <div class="coinsOnPan" id="leftPan"></div>
+              </div>
+              <div class="pan right">
+                <div class="coinsOnPan" id="rightPan"></div>
+              </div>
+            </div>
+          </section>
+          <div class="tray" id="tray"></div>
+          <div class="history" id="history"></div>
+          <div class="log" id="log"></div>
+        </main>
+        <aside class="col-12 col-lg-4 p-2 side">
+          <h2>Canicas (1–12)</h2>
+          <div class="list" id="coinsList"></div>
+          <div class="final" id="final"></div>
+        </aside>
       </div>
-      <section class="stage">
-        <div class="scale">
-          <div class="pillar"></div>
-          <div class="beam" id="beam"></div>
-          <div class="chain left"></div>
-          <div class="chain right"></div>
-          <div class="pan left"><div class="coinsOnPan" id="leftPan"></div></div>
-          <div class="pan right"><div class="coinsOnPan" id="rightPan"></div></div>
-        </div>
-      </section>
-      <div class="tray" id="tray"></div>
-      <div class="history" id="history"></div>
-      <div class="log" id="log"></div>
-    </main>
-    <aside class="side">
-      <h2>Canicas (1–12)</h2>
-      <div class="list" id="coinsList"></div>
-      <div class="final" id="final"></div>
-    </aside>
-  </div>
-</div>
+    </div>
 
-<script>
-const state = {
-  odd:null, // canica diferente
-  oddType:null, // 'heavy' | 'light'
-  left:[], right:[],
-  weighs:0,
-  finished:false,
-  selected: null
-
-};
-
-const el={
-  beam:document.getElementById('beam'),
-  leftPan:document.getElementById('leftPan'),
-  rightPan:document.getElementById('rightPan'),
-  tray:document.getElementById('tray'),
-  coinsList:document.getElementById('coinsList'),
-  log:document.getElementById('log'),
-  history:document.getElementById('history'),
-  final:document.getElementById('final'),
-  weighBtn:document.getElementById('weighBtn'),
-  guessBtn:document.getElementById('guessBtn'),
-  resetBtn:document.getElementById('resetBtn'),
-  weighCount:document.getElementById('weighCount')
-};
-
-const ALL=Array.from({length:12},(_,i)=>i+1);
-
-function init(){
-  state.odd=Math.floor(Math.random()*12)+1;
-  state.oddType=Math.random()<0.5?'heavy':'light';
-  state.left=[]; state.right=[]; state.weighs=0; state.finished=false;
-  el.log.innerHTML=''; el.history.innerHTML=''; el.final.innerHTML='';
-  renderCoins(); renderPans(); tilt('eq'); updateCount();
-  log(`Juego iniciado. Hay una canica distinta (pesada o ligera). Tienes 3 intentos.`);
-}
-
-function renderCoins(){
-  el.coinsList.innerHTML='';
-  ALL.forEach(n=>{
-    const s=document.createElement('span');
-    s.textContent=n;
-    s.className='chip';
-    if(state.selected===n) s.classList.add('selected');
-    s.onclick=()=>selectCoin(n);
-    el.coinsList.appendChild(s);
-  });
-}
-
-function selectCoin(n){
-  if(state.finished) return;
-  if(state.selected===n){
-    state.selected=null; // quitar selección
-  } else {
-    state.selected=n; // nueva selección
-  }
-  renderCoins();
-}
-
-
-function toggleCoin(n){
-  if(state.finished) return;
-  const inLeft=state.left.includes(n);
-  const inRight=state.right.includes(n);
-  if(inLeft){state.left=state.left.filter(x=>x!==n);} 
-  else if(inRight){state.right=state.right.filter(x=>x!==n);} 
-  else if(state.left.length<=state.right.length){state.left.push(n);} 
-  else{state.right.push(n);} 
-  renderPans();
-}
-
-function renderPans(){
-  const fill=(container,arr,side)=>{
-    container.innerHTML='';
-    arr.forEach(n=>{
-      const s=document.createElement('span');
-      s.textContent=n;
-      s.className='chip selected';
-      s.onclick=()=>{ // quitar de la balanza
-        state[side]=state[side].filter(x=>x!==n);
-        renderPans();
-        renderCoins();
+    <script>
+      /* Tu mismo script de antes sin cambios */
+      const state = {
+        odd: null, // canica diferente
+        oddType: null, // 'heavy' | 'light'
+        left: [],
+        right: [],
+        weighs: 0,
+        finished: false,
+        selected: null,
       };
-      container.appendChild(s);
-    });
-  };
-  fill(el.leftPan,state.left,"left");
-  fill(el.rightPan,state.right,"right");
-}
 
+      const el = {
+        beam: document.getElementById("beam"),
+        leftPan: document.getElementById("leftPan"),
+        rightPan: document.getElementById("rightPan"),
+        tray: document.getElementById("tray"),
+        coinsList: document.getElementById("coinsList"),
+        log: document.getElementById("log"),
+        history: document.getElementById("history"),
+        final: document.getElementById("final"),
+        weighBtn: document.getElementById("weighBtn"),
+        guessBtn: document.getElementById("guessBtn"),
+        resetBtn: document.getElementById("resetBtn"),
+        weighCount: document.getElementById("weighCount"),
+      };
 
-function tilt(which){
-  if(which==='eq') el.beam.style.transform='translateX(-50%) rotate(0deg)';
-  if(which==='left') el.beam.style.transform='translateX(-50%) rotate(-8deg)';
-  if(which==='right') el.beam.style.transform='translateX(-50%) rotate(8deg)';
-}
+      const ALL = Array.from({ length: 12 }, (_, i) => i + 1);
 
-function log(msg,cls=''){ el.log.innerHTML+=`<p class="${cls}">${msg}</p>`; el.log.scrollTop=el.log.scrollHeight; }
+      function init() {
+        state.odd = Math.floor(Math.random() * 12) + 1;
+        state.oddType = Math.random() < 0.5 ? "heavy" : "light";
+        state.left = [];
+        state.right = [];
+        state.weighs = 0;
+        state.finished = false;
+        el.log.innerHTML = "";
+        el.history.innerHTML = "";
+        el.final.innerHTML = "";
+        renderCoins();
+        renderPans();
+        tilt("eq");
+        updateCount();
+        log(
+          `Juego iniciado. Hay una canica distinta (pesada o ligera). Tienes 3 intentos.`
+        );
+      }
 
-function updateCount(){
-  el.weighCount.textContent=`${state.weighs} / 3 pesadas`;
-}
+      function renderCoins() {
+        el.coinsList.innerHTML = "";
+        ALL.forEach((n) => {
+          const s = document.createElement("span");
+          s.textContent = n;
+          s.className = "chip";
+          if (state.selected === n) s.classList.add("selected");
+          s.onclick = () => selectCoin(n);
+          el.coinsList.appendChild(s);
+        });
+      }
 
-function weigh(){
-  if(state.finished) return;
-  if(state.weighs>=3){log('Ya no tienes más pesadas.','bad'); return;}
-  if(state.left.length===0 && state.right.length===0){log('Coloca canicas en la balanza.','warn'); return;}
-  state.weighs++;
-  let weightLeft=state.left.length;
-  let weightRight=state.right.length;
-  if(state.left.includes(state.odd)) weightLeft += (state.oddType==='heavy'?1:-1);
-  if(state.right.includes(state.odd)) weightRight += (state.oddType==='heavy'?1:-1);
-  let result='eq';
-  if(weightLeft>weightRight) result='left';
-  if(weightRight>weightLeft) result='right';
-  tilt(result);
-  updateCount();
-  el.history.innerHTML+=`<div>Pesada ${state.weighs}: [${state.left}] vs [${state.right}] → ${result}</div>`;
-  log(`Pesada ${state.weighs}: La balanza ${result==='eq'?'se equilibró':result==='left'?'bajó izquierda':'bajó derecha'}.`);
-  state.left=[]; state.right=[]; renderPans();
-}
+      function selectCoin(n) {
+        if (state.finished) return;
+        if (state.selected === n) {
+          state.selected = null;
+        } else {
+          state.selected = n;
+        }
+        renderCoins();
+      }
 
-function guess(){
-  if(state.finished) return;
-  const pick=prompt('Ingresa el número de la canica sospechosa (1-12):');
-  const num=parseInt(pick);
-  if(!ALL.includes(num)) return;
-  state.finished=true;
-  if(num===state.odd){
-    el.final.innerHTML=`✅ Correcto: La canica ${num} es la distinta (${state.oddType==='heavy'?'más pesada':'más ligera'}).`;
-    log(`¡Acertaste! La canica ${num} era la diferente (${state.oddType}).`,'ok');
-  } else {
-    el.final.innerHTML=`❌ Fallaste. La canica ${state.odd} era la distinta (${state.oddType==='heavy'?'más pesada':'más ligera'}).`;
-    log(`Fallaste. La canica correcta era ${state.odd} (${state.oddType}).`,'bad');
-  }
-}
+      function toggleCoin(n) {
+        if (state.finished) return;
+        const inLeft = state.left.includes(n);
+        const inRight = state.right.includes(n);
+        if (inLeft) {
+          state.left = state.left.filter((x) => x !== n);
+        } else if (inRight) {
+          state.right = state.right.filter((x) => x !== n);
+        } else if (state.left.length <= state.right.length) {
+          state.left.push(n);
+        } else {
+          state.right.push(n);
+        }
+        renderPans();
+      }
 
-el.leftPan.parentElement.onclick=()=>{
-  if(state.selected){
-    if(!state.left.includes(state.selected) && !state.right.includes(state.selected)){
-      state.left.push(state.selected);
-    }
-    state.selected=null;
-    renderPans();
-    renderCoins();
-  }
-};
+      function renderPans() {
+        const fill = (container, arr, side) => {
+          container.innerHTML = "";
+          arr.forEach((n) => {
+            const s = document.createElement("span");
+            s.textContent = n;
+            s.className = "chip selected";
+            s.onclick = () => {
+              state[side] = state[side].filter((x) => x !== n);
+              renderPans();
+              renderCoins();
+            };
+            container.appendChild(s);
+          });
+        };
+        fill(el.leftPan, state.left, "left");
+        fill(el.rightPan, state.right, "right");
+      }
 
-el.rightPan.parentElement.onclick=()=>{
-  if(state.selected){
-    if(!state.left.includes(state.selected) && !state.right.includes(state.selected)){
-      state.right.push(state.selected);
-    }
-    state.selected=null;
-    renderPans();
-    renderCoins();
-  }
-};
+      function tilt(which) {
+        if (which === "eq")
+          el.beam.style.transform = "translateX(-50%) rotate(0deg)";
+        if (which === "left")
+          el.beam.style.transform = "translateX(-50%) rotate(-8deg)";
+        if (which === "right")
+          el.beam.style.transform = "translateX(-50%) rotate(8deg)";
+      }
 
+      function log(msg, cls = "") {
+        el.log.innerHTML += `<p class="${cls}">${msg}</p>`;
+        el.log.scrollTop = el.log.scrollHeight;
+      }
 
-el.weighBtn.onclick=weigh;
-el.guessBtn.onclick=guess;
-el.resetBtn.onclick=init;
+      function updateCount() {
+        el.weighCount.textContent = `${state.weighs} / 3 pesadas`;
+      }
 
-init();
-</script>
-</body>
+      function weigh() {
+        if (state.finished) return;
+        if (state.weighs >= 3) {
+          log("Ya no tienes más pesadas.", "bad");
+          return;
+        }
+        if (state.left.length === 0 && state.right.length === 0) {
+          log("Coloca canicas en la balanza.", "warn");
+          return;
+        }
+        state.weighs++;
+        let weightLeft = state.left.length;
+        let weightRight = state.right.length;
+        if (state.left.includes(state.odd))
+          weightLeft += state.oddType === "heavy" ? 1 : -1;
+        if (state.right.includes(state.odd))
+          weightRight += state.oddType === "heavy" ? 1 : -1;
+        let result = "eq";
+        if (weightLeft > weightRight) result = "left";
+        if (weightRight > weightLeft) result = "right";
+        tilt(result);
+        updateCount();
+        el.history.innerHTML += `<div>Pesada ${state.weighs}: [${state.left}] vs [${state.right}] → ${result}</div>`;
+        log(
+          `Pesada ${state.weighs}: La balanza ${
+            result === "eq"
+              ? "se equilibró"
+              : result === "left"
+              ? "bajó izquierda"
+              : "bajó derecha"
+          }.`
+        );
+        state.left = [];
+        state.right = [];
+        renderPans();
+      }
+
+      function guess() {
+        if (state.finished) return;
+        const pick = prompt(
+          "Ingresa el número de la canica sospechosa (1-12):"
+        );
+        const num = parseInt(pick);
+        if (!ALL.includes(num)) return;
+        state.finished = true;
+        if (num === state.odd) {
+          el.final.innerHTML = `✅ Correcto: La canica ${num} es la distinta (${
+            state.oddType === "heavy" ? "más pesada" : "más ligera"
+          }).`;
+          log(
+            `¡Acertaste! La canica ${num} era la diferente (${state.oddType}).`,
+            "ok"
+          );
+        } else {
+          el.final.innerHTML = `❌ Fallaste. La canica ${
+            state.odd
+          } era la distinta (${
+            state.oddType === "heavy" ? "más pesada" : "más ligera"
+          }).`;
+          log(
+            `Fallaste. La canica correcta era ${state.odd} (${state.oddType}).`,
+            "bad"
+          );
+        }
+      }
+
+      el.leftPan.parentElement.onclick = () => {
+        if (state.selected) {
+          if (
+            !state.left.includes(state.selected) &&
+            !state.right.includes(state.selected)
+          ) {
+            state.left.push(state.selected);
+          }
+          state.selected = null;
+          renderPans();
+          renderCoins();
+        }
+      };
+
+      el.rightPan.parentElement.onclick = () => {
+        if (state.selected) {
+          if (
+            !state.left.includes(state.selected) &&
+            !state.right.includes(state.selected)
+          ) {
+            state.right.push(state.selected);
+          }
+          state.selected = null;
+          renderPans();
+          renderCoins();
+        }
+      };
+
+      el.weighBtn.onclick = weigh;
+      el.guessBtn.onclick = guess;
+      el.resetBtn.onclick = init;
+
+      init();
+    </script>
+  </body>
 </html>
