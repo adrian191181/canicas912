@@ -157,6 +157,11 @@ header h1 {
   border-color: var(--accent);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
 }
+.chip.disabled {
+  opacity: 0.38;
+  pointer-events: none;
+  filter: grayscale(40%);
+}
 .tray {
   padding: 12px;
   border-top: 1px dashed rgba(148, 163, 184, 0.2);

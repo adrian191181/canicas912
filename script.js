@@ -51,29 +51,25 @@ function init() {
 function renderCoins() {
   el.coinsList.innerHTML = "";
   ALL.forEach((n) => {
+    const inPan = state.left.includes(n) || state.right.includes(n);
     const s = document.createElement("span");
     s.textContent = n;
     s.className = "chip";
-    s.setAttribute("draggable", "true");
     if (state.selected === n) s.classList.add("selected");
-
-    // Click tradicional para seleccionar
-    s.onclick = () => selectCoin(n);
-
-    // Drag start (ratón)
-    s.addEventListener("dragstart", (e) => {
-      e.dataTransfer.setData("text/plain", n);
-      // opcional: mostrar ghost
-    });
-
-    // Soporte táctil: inicia "arrastre" táctil
-    s.addEventListener(
-      "touchstart",
-      (e) => {
+    if (inPan) {
+      s.classList.add("disabled");
+      s.setAttribute("aria-disabled", "true");
+      s.removeAttribute("draggable");
+    } else {
+      s.setAttribute("draggable", "true");
+      s.onclick = () => selectCoin(n);
+      s.addEventListener("dragstart", (e) => {
+        e.dataTransfer.setData("text/plain", n);
+      });
+      s.addEventListener("touchstart", (e) => {
         state.touchDragging = n;
-      },
-      { passive: true }
-    );
+      }, { passive: true });
+    }
 
     el.coinsList.appendChild(s);
   });
@@ -81,6 +77,7 @@ function renderCoins() {
 
 function selectCoin(n) {
   if (state.finished) return;
+  if (state.left.includes(n) || state.right.includes(n)) return;
   if (state.selected === n) {
     state.selected = null;
   } else {
@@ -88,6 +85,7 @@ function selectCoin(n) {
   }
   renderCoins();
 }
+
 
 function renderPans() {
   const fill = (container, arr, side) => {
@@ -153,32 +151,34 @@ function weigh() {
     log("Coloca canicas en la balanza.", "warn");
     return;
   }
+
   state.weighs++;
   let weightLeft = state.left.length;
   let weightRight = state.right.length;
-  if (state.left.includes(state.odd))
-    weightLeft += state.oddType === "heavy" ? 1 : -1;
-  if (state.right.includes(state.odd))
-    weightRight += state.oddType === "heavy" ? 1 : -1;
+  if (state.left.includes(state.odd)) weightLeft += state.oddType === "heavy" ? 1 : -1;
+  if (state.right.includes(state.odd)) weightRight += state.oddType === "heavy" ? 1 : -1;
   let result = "eq";
   if (weightLeft > weightRight) result = "left";
   if (weightRight > weightLeft) result = "right";
+
   tilt(result);
   updateCount();
   el.history.innerHTML += `<div>Pesada ${state.weighs}: [${state.left}] vs [${state.right}] → ${result}</div>`;
-  log(
-    `Pesada ${state.weighs}: La balanza ${
-      result === "eq"
-        ? "se equilibró"
-        : result === "left"
-        ? "bajó izquierda"
-        : "bajó derecha"
-    }.`
-  );
+  log(`Pesada ${state.weighs}: La balanza ${result === "eq" ? "se equilibró" : result === "left" ? "bajó izquierda" : "bajó derecha" }.`);
+
+  // vaciar las bandejas y asegurarse de que las canicas vuelvan a estar habilitadas
   state.left = [];
   state.right = [];
+
+  // limpiar selección/arrastre activo para evitar estados inconsistentes
+  state.selected = null;
+  if ("touchDragging" in state) state.touchDragging = null;
+
+  // volver a renderizar ambos (pans + lista) para que las chips se habiliten
   renderPans();
+  renderCoins();
 }
+
 
 function guess() {
   if (state.finished) return;
